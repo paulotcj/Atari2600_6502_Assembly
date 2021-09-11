@@ -15,8 +15,9 @@ Start:
 
 NextFrame:
     LDA #2              ; Same as binary value %00000010
-    STA VBLANK          ; turn on VBLANK
     STA VSYNC           ; turn on VSYNC
+    STA VBLANK          ; turn on VBLANK
+    
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -27,7 +28,7 @@ NextFrame:
     STA WSYNC           ; Third scanline
     
     LDA #0
-    STA VSYNC
+    STA VSYNC           ; Turn off VSYNC
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Let the TIA output the recommended 37 scanlines of VBLANK
