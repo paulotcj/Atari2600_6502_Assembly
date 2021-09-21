@@ -88,7 +88,7 @@ LoadBitmap:
     LDA P0Bitmap,Y      ;Load Player 0 bitmap, at line Y (we are starting from the end here)
     
     
-    STA GRP0            ;Define this as graphics for player 0
+    STA GRP0            ;Define where the graphics will be placed
     LDA P0Color,Y       ;Load Player colour
     STA COLUP0          ;Set colour
     
