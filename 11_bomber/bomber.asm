@@ -75,8 +75,8 @@ GameVisibleScanLines:
     LDA #$C2
     STA COLUPF          ; SET PLAYFIELD TO GREEN
 
-    STA #%00000001
-    LDA CTRLPF
+    LDA #%00000001
+    STA CTRLPF          ; PLAYFIELD REFLECTION
 
     LDA #$F0
     STA PF0
