@@ -74,6 +74,18 @@ GameVisibleScanLines:
 
     LDA #$C2
     STA COLUPF          ; SET PLAYFIELD TO GREEN
+
+    STA #%00000001
+    LDA CTRLPF
+
+    LDA #$F0
+    STA PF0
+    
+    LDA #$FC
+    STA PF1
+    
+    LDA #0
+    STA PF2
     
     LDX #192            ; X COUNTS THE NUMBER OF REMAINING SCANLINES
 .GameLineLoop
