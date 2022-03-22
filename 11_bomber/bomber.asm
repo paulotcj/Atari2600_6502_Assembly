@@ -10,7 +10,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; variables
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    
-    seq.u Variables
+    seg.u Variables
     org $80
 
 JetYPos     byte    ; player0 y position
@@ -73,7 +73,7 @@ GameVisibleScanLines:
     STA COLUBK
 
     LDA #$C2
-    STA                 ; SET PLAYFIELD TO GREEN
+    STA COLUPF          ; SET PLAYFIELD TO GREEN
     
     LDX #192            ; X COUNTS THE NUMBER OF REMAINING SCANLINES
 .GameLineLoop
@@ -105,7 +105,7 @@ GameVisibleScanLines:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   
     ORG $FFFC       ;MOVE TO POSITION $FFFC
     WORD Reset      ;WRITE 2 BYTES WITH THE PROGRAM RESET ADDRESS
-    WIRD Reset      ;WRITE 2 BYTES WITH THE INTERRUPTION VECTOR
+    WORD Reset      ;WRITE 2 BYTES WITH THE INTERRUPTION VECTOR
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
