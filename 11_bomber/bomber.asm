@@ -149,8 +149,8 @@ GameVisibleScanLines:
     LDA (JetSpritePtr),Y    ; load player bitmap slice of data
     STA WSYNC               ; wait for next scanline
     STA GRP0                ; set graphics for player 0
-    LDA (JetColourPtr),Y    ; load player color from lookup table
-    STA COLUP0              ; set color for player 0 slice
+    LDA (JetColourPtr),Y    ; load player colour from lookup table
+    STA COLUP0              ; set colour for player 0 slice
     
 
 .AreWeInsideBomberSprite:   ; check if should render sprite player1
@@ -168,8 +168,8 @@ GameVisibleScanLines:
     LDA (BomberSpritePtr),Y ; load player bitmap slice of data
     STA WSYNC               ; wait for next scanline
     STA GRP1                ; set graphics for player 0
-    LDA (BomberColorPtr),Y  ; load player color from lookup table
-    STA COLUP1              ; set color for player 0 slice
+    LDA (BomberColourPtr),Y  ; load player colour from lookup table
+    STA COLUP1              ; set colour for player 0 slice
     
 
 
