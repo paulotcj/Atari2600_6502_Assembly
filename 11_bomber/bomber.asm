@@ -8,25 +8,25 @@
     include "macro.h"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; variables
+; Declare (UNINITIALIZED) variables starting from memory address $80
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    
     seg.u Variables
     org $80
 
-JetYPos             byte    ; player0 y position
-JetXPos             byte    ; player0 x position
-BomberXPos          byte    ; player1 y position
-BomberYPos          byte    ; player1 x position
-JetSpritePtr        WORD    ; POINTER TO PLAYER0 SPRITE LOOKUP TABLE
-JetColourPtr        WORD    ; POINTER TO PLAYER0 COLOUR LOOKUP TABLE
-BomberSpritePtr     WORD    ; POINTER TO PLAYER1 SPRITE LOOKUP TABLE
-BomberColourPtr     WORD    ; POINTER TO PLAYER1 COLOUR LOOKUP TABLE
+JetXPos         byte         ; player0 x-position
+JetYPos         byte         ; player0 y-position
+BomberXPos      byte         ; player1 x-position
+BomberYPos      byte         ; player1 y-position
+JetSpritePtr    word         ; pointer to player0 sprite lookup table
+JetColorPtr     word         ; pointer to player0 color lookup table
+BomberSpritePtr word         ; pointer to player1 sprite lookup table
+BomberColorPtr  word         ; pointer to player1 color lookup table
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; DEFINE CONSTANTS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; 
-JET_HEIGHT = 9      ; PLAYER0 SPRITE HEIGHT (# ROWS IN THE LOOKUP TABLE)
-BOMBER_HEIGHT = 9   ; PLAYER1 SPRITE HEIGHT (# ROWS IN THE LOOKUP TABLE)  
+JET_HEIGHT = 9               ; player0 sprite height (# rows in lookup table)
+BOMBER_HEIGHT = 9            ; player1 sprite height (# rows in lookup table)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Start our ROM code at memory address $F000
@@ -35,8 +35,7 @@ BOMBER_HEIGHT = 9   ; PLAYER1 SPRITE HEIGHT (# ROWS IN THE LOOKUP TABLE)
     org $F000
 
 Reset:
-    CLEAN_START     ;call macro to reset memory and registers
-
+    CLEAN_START              ; call macro to reset memory and registers
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Initialize RAM variables and TIA registers
@@ -63,10 +62,10 @@ Reset:
     LDA #>JetSprite
     STA JetSpritePtr+1          ; hi-byte pointer for jet sprite lookup table
     ;---------
-    LDA #<JetColour
-    STA JetColourPtr            ; lo-byte pointer for jet colour lookup table
-    LDA #>JetColour
-    STA JetColourPtr+1          ; hi-byte pointer for jet colour lookup table
+    LDA #<JetColor
+    STA JetColorPtr            ; lo-byte pointer for jet color lookup table
+    LDA #>JetColor
+    STA JetColorPtr+1          ; hi-byte pointer for jet color lookup table
     
     ;---------
 
@@ -75,10 +74,10 @@ Reset:
     LDA #>BomberSprite
     STA BomberSpritePtr+1       ; hi-byte pointer for enemy sprite lookup table
     ;---------
-    LDA #<BomberColour
-    STA BomberColourPtr         ; lo-byte pointer for enemy colour lookup table
-    LDA #>BomberColour
-    STA BomberColourPtr+1       ; hi-byte pointer for enemy colour lookup table
+    LDA #<BomberColor
+    STA BomberColorPtr       ; lo-byte pointer for enemy color lookup table
+    LDA #>BomberColor
+    STA BomberColorPtr+1     ; hi-byte pointer for enemy color lookup table
     
     ;---------
 
@@ -98,12 +97,10 @@ StartFrame:
     REPEAT 3
         STA WSYNC   ; display 3 recommended lines of vsync
     REPEND
-
-    LDA #0          ; turn off vsync
-    STA VSYNC
-    
+    LDA #0
+    STA VSYNC                ; turn off VSYNC
     REPEAT 37
-        STA WSYNC   ; display 3 recommended lines of vblank
+        STA WSYNC   ; display 37 recommended lines of vblank
     REPEND
     
     STA VBLANK      ; TURN OFF VBLANK
@@ -113,24 +110,24 @@ StartFrame:
 ; RENDER 192 SCANLINES
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   
 
-GameVisibleScanLines:
-    LDA #$84            ; SET COLOUR BACKGROUND TO BLUE
-    STA COLUBK
+GameVisibleLine:
+    LDA #$84
+    STA COLUBK               ; set background/river color to blue
 
     LDA #$C2
-    STA COLUPF          ; SET PLAYFIELD TO GREEN
+    STA COLUPF               ; set playfield/grass color to green
 
     LDA #%00000001
-    STA CTRLPF          ; PLAYFIELD REFLECTION
+    STA CTRLPF               ; enable playfield reflection
 
     LDA #$F0
-    STA PF0
-    
+    STA PF0                  ; setting PF0 bit pattern
+
     LDA #$FC
-    STA PF1
-    
+    STA PF1                  ; setting PF1 bit pattern
+
     LDA #0
-    STA PF2
+    STA PF2                  ; setting PF2 bit pattern
     
     LDX #96            ; X COUNTS THE NUMBER OF REMAINING SCANLINES
 .GameLineLoop:
@@ -149,8 +146,8 @@ GameVisibleScanLines:
     LDA (JetSpritePtr),Y    ; load player bitmap slice of data
     STA WSYNC               ; wait for next scanline
     STA GRP0                ; set graphics for player 0
-    LDA (JetColourPtr),Y    ; load player colour from lookup table
-    STA COLUP0              ; set colour for player 0 slice
+    LDA (JetColorPtr),Y    ; load player color from lookup table
+    STA COLUP0              ; set color for player 0 slice
     
 
 .AreWeInsideBomberSprite:   ; check if should render sprite player1
@@ -161,48 +158,38 @@ GameVisibleScanLines:
     BCC .DrawSpriteP1       ; if result < SpriteHeight, call subroutine
     LDA #0                  ; else, set index to 0
 
-.DrawSpriteP1
+.DrawSpriteP1:
     TAY                     
-    LDA #%00000101
+    LDA #%0000101
     STA NUSIZ1              ; stretch player1 sprite - based on data set above
     LDA (BomberSpritePtr),Y ; load player bitmap slice of data
     STA WSYNC               ; wait for next scanline
     STA GRP1                ; set graphics for player 0
-    LDA (BomberColourPtr),Y  ; load player colour from lookup table
-    STA COLUP1              ; set colour for player 0 slice
+    LDA (BomberColorPtr),Y  ; load player color from lookup table
+    STA COLUP1              ; set color for player 0 slice
     
 
 
 
     DEX                 ; X--
-    BNE .GameLineLoop   ; REPEAT UNTIL FINISHED
-
+    BNE .GameLineLoop        ; repeat next main game scanline while X != 0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; DISPLAY OVERSCAN
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   
 
     LDA #2
-    STA VBLANK
+    STA VBLANK               ; turn on VBLANK again
     REPEAT 30
-        STA WSYNC
+        STA WSYNC            ; display 30 recommended lines of VBlank Overscan
     REPEND
-
     LDA #0
-    STA VBLANK
+    STA VBLANK               ; turn off VBLANK
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; LOOP BACK TO START A  NEW FRAME
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   
     JMP StartFrame      ; continue to display the next frame
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; COMPLETE ROM SIZE UP TO 4KB
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   
-    ORG $FFFC       ;MOVE TO POSITION $FFFC
-    WORD Reset      ;WRITE 2 BYTES WITH THE PROGRAM RESET ADDRESS
-    WORD Reset      ;WRITE 2 BYTES WITH THE INTERRUPTION VECTOR
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Declare ROM lookup tables
@@ -218,7 +205,6 @@ JetSprite:
     .byte #%00001000         ;    #
     .byte #%00001000         ;    #
     .byte #%00001000         ;    #
-
 
 JetSpriteTurn:
     .byte #%00000000         ;
@@ -243,8 +229,8 @@ BomberSprite:
     .byte #%00011100         ;   ###
 
 ;------------------------------------------------------------------
-; Colour
-JetColour:
+; Color
+JetColor:
     .byte #$00
     .byte #$FE
     .byte #$0C
@@ -255,7 +241,7 @@ JetColour:
     .byte #$0E
     .byte #$08
 
-JetColourTurn:
+JetColorTurn:
     .byte #$00
     .byte #$FE
     .byte #$0C
@@ -266,7 +252,7 @@ JetColourTurn:
     .byte #$0E
     .byte #$08
 
-BomberColour:
+BomberColor:
     .byte #$00
     .byte #$32
     .byte #$32
@@ -278,9 +264,11 @@ BomberColour:
     .byte #$40
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 
+; Complete ROM size with exactly 4KB
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   
-
+    org $FFFC                ; move to position $FFFC
+    word Reset               ; write 2 bytes with the program reset address
+    word Reset               ; write 2 bytes with the interruption vector
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 
