@@ -69,9 +69,9 @@ Reset:
     LDA #%11010100
     STA Random          ; Random = $D4
 
-    LDA #0
+    LDA #4
     STA Score           ;Score = 0
-
+    LDA #8
     STA Timer           ;Timer = 0
     
 
@@ -320,48 +320,37 @@ CheckP0Up:
     LDA #%00010000          ; player0 joystick up
     BIT SWCHA               ; bit test - this register is feed from the controller and should present the same bit battern as describe above (if the butto is pressed)
     BNE CheckP0Down         ; if bit pattern doesnt match, bypass Up block
-
-    LDA JetYPos
-    CMP #70                  ; if (player0 Y position > 70)
-    BPL CheckP0Down          ;    then: skip increment (BRANCH ON PLUS)
-    INC JetYPos              ;    else: increment Y position
+.P0IsUp:
+    INC JetYPos
     LDA #0
-    STA JetAnimOffset        ; set jet animation frame to zero
-
+    STA JetAnimOffset       ; reset sprite animation to first frame
 
 CheckP0Down:
-    LDA #%00100000           ; if player 0 joystick down
+    LDA #%00100000          ; player0 joystick down
     BIT SWCHA
-    BNE CheckP0Left
-    LDA JetYPos
-    CMP #5                   ; if (player0 Y position < 5)
-    BMI CheckP0Left          ; BRANCH MINUS   then: skip decrement
-    DEC JetYPos              ;    else: decrement Y position
+    BNE CheckP0Left         ; if bit pattern doesnt match, bypass Down block
+.P0IsDown:
+    DEC JetYPos
     LDA #0
-    STA JetAnimOffset        ; set jet animation frame to zero
+    STA JetAnimOffset       ; reset sprite animation to first frame
 
 CheckP0Left:
-    LDA #%01000000           ; if player 0 joystick left
+    LDA #%01000000          ; player0 joystick left
     BIT SWCHA
-    BNE CheckP0Right
-    LDA JetXPos
-    CMP #35                  ; if (player0 X position < 35)
-    BMI CheckP0Right         ;    then: skip decrement
-    DEC JetXPos              ;    else: decrement X position
-    LDA JET_HEIGHT
-    STA JetAnimOffset        ; set new offset to display second sprite frame
+    BNE CheckP0Right        ; if bit pattern doesnt match, bypass Left block
+.P0IsLeft:
+    DEC JetXPos
+    LDA JET_HEIGHT          ; 9
+    STA JetAnimOffset       ; set animation offset to the second frame
 
 CheckP0Right:
-    LDA #%10000000           ; if player 0 joystick right
+    LDA #%10000000          ; player0 joystick right
     BIT SWCHA
-    BNE EndInputCheck
-    LDA JetXPos
-    CMP #100                 ; if (player0 X position > 100)
-    BPL EndInputCheck        ;    then: skip increment
-    INC JetXPos              ;    else: increment X position
-
-    LDA JET_HEIGHT
-    STA JetAnimOffset        ; set new offset to display second sprite frame
+    BNE EndInputCheck       ; if bit pattern doesnt match, bypass Right block
+.P0IsRight:
+    INC JetXPos
+    LDA JET_HEIGHT          ; 9
+    STA JetAnimOffset       ; set animation offset to the second frame
 
 EndInputCheck:              ; fallback when no input was performed
 
@@ -378,9 +367,7 @@ UpdateBomberPosition:
     JMP EndPositionUpdate
 
 .ResetBomberPosition:
-    JSR GetRandomBomberPos      ; call subroutine for random bomber position
-    INC Score                ; Score++
-    INC Timer                ; Timer++                                
+    jsr GetRandomBomberPos      ; call subroutine for random bomber position                              
 
 
 EndPositionUpdate:              ; fallback for the position update code

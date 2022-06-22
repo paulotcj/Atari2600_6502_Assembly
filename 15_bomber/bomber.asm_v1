@@ -12,25 +12,23 @@
     seg.u Variables
     org $80
 
-JetXPos         byte        ; player 0 x-position
-JetYPos         byte        ; player 0 y-position
-BomberXPos      byte        ; player 1 x-position
-BomberYPos      byte        ; player 1 y-position
-Score           byte        ; 2-digit score stored as BCD
-Timer           byte        ; 2-digit timer stored as BCD
-Temp            byte        ; auxiliary variable to store temp values
-OnesDigitOffset word        ; lookup table offset for the score Ones digit
-TensDigitOffset word        ; lookup table offset for the score Tens digit
-JetSpritePtr    word        ; pointer to player0 sprite lookup table
-JetColorPtr     word        ; pointer to player0 color lookup table
-BomberSpritePtr word        ; pointer to player1 sprite lookup table
-BomberColorPtr  word        ; pointer to player1 color lookup table
-JetAnimOffset   byte        ; player0 frame offset for sprite animation
-Random          byte        ; used to generate random bomber x-position
-ScoreSprite     byte        ; store the sprite bit pattern for the score
-TimerSprite     byte        ; store the sprite bit pattern for the timer
-TerrainColor    byte        ; store the color of the terrain playfield
-RiverColor      byte        ; store the color of the river playfield
+JetXPos         byte         ; player 0 x-position
+JetYPos         byte         ; player 0 y-position
+BomberXPos      byte         ; player 1 x-position
+BomberYPos      byte         ; player 1 y-position
+Score           byte         ; 2-digit score stored as BCD
+Timer           byte         ; 2-digit timer stored as BCD
+Temp            byte         ; auxiliary variable to store temp values
+OnesDigitOffset word         ; lookup table offset for the score Ones digit
+TensDigitOffset word         ; lookup table offset for the score Tens digit
+JetSpritePtr    word         ; pointer to player0 sprite lookup table
+JetColorPtr     word         ; pointer to player0 color lookup table
+BomberSpritePtr word         ; pointer to player1 sprite lookup table
+BomberColorPtr  word         ; pointer to player1 color lookup table
+JetAnimOffset   byte         ; player0 frame offset for sprite animation
+Random          byte         ; used to generate random bomber x-position
+ScoreSprite     byte         ; store the sprite bit pattern for the score
+TimerSprite     byte         ; store the sprite bit pattern for the timer
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Define constants
@@ -71,7 +69,6 @@ Reset:
 
     LDA #0
     STA Score           ;Score = 0
-
     STA Timer           ;Timer = 0
     
 
@@ -154,17 +151,11 @@ StartFrame:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    
 
     LDA #0                  ; clear TIA registers before each new frame
-    STA COLUBK
     STA PF0
     STA PF1
     STA PF2
     STA GRP0
     STA GRP1
-
-    STA CTRLPF
-    LDA #$1E
-    STA COLUPF              ; set the scoreboard playfield color with yellow
-
 
     LDX #DIGITS_HEIGHT      ; start X counter with 5 (height of digits)
 
@@ -215,14 +206,6 @@ StartFrame:
 
     STA WSYNC
 
-    LDA #0
-    STA PF0
-    STA PF1
-    STA PF2
-    STA WSYNC
-    STA WSYNC
-    STA WSYNC
-
 
 
 
@@ -231,11 +214,11 @@ StartFrame:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 GameVisibleLine:
-    LDA TerrainColor
-    STA COLUPF               ; set playfield/grass color to green
-
-    LDA RiverColor
+    LDA #$84
     STA COLUBK               ; set background/river color to blue
+
+    LDA #$C2
+    STA COLUPF               ; set playfield/grass color to green
 
     LDA #%00000001
     STA CTRLPF               ; enable playfield reflection
@@ -251,7 +234,7 @@ GameVisibleLine:
     
     ;----------------------------------------
     ; this is the beginning of the loop
-    LDX #85                 ; X COUNTS THE NUMBER OF REMAINING SCANLINES
+    LDX #84                 ; X COUNTS THE NUMBER OF REMAINING SCANLINES
 .GameLineLoop:
 .AreWeInsideJetSprite:      ; check if should render sprite player0
     TXA                     ; transfer X to A
@@ -320,48 +303,37 @@ CheckP0Up:
     LDA #%00010000          ; player0 joystick up
     BIT SWCHA               ; bit test - this register is feed from the controller and should present the same bit battern as describe above (if the butto is pressed)
     BNE CheckP0Down         ; if bit pattern doesnt match, bypass Up block
-
-    LDA JetYPos
-    CMP #70                  ; if (player0 Y position > 70)
-    BPL CheckP0Down          ;    then: skip increment (BRANCH ON PLUS)
-    INC JetYPos              ;    else: increment Y position
+.P0IsUp:
+    INC JetYPos
     LDA #0
-    STA JetAnimOffset        ; set jet animation frame to zero
-
+    STA JetAnimOffset       ; reset sprite animation to first frame
 
 CheckP0Down:
-    LDA #%00100000           ; if player 0 joystick down
+    LDA #%00100000          ; player0 joystick down
     BIT SWCHA
-    BNE CheckP0Left
-    LDA JetYPos
-    CMP #5                   ; if (player0 Y position < 5)
-    BMI CheckP0Left          ; BRANCH MINUS   then: skip decrement
-    DEC JetYPos              ;    else: decrement Y position
+    BNE CheckP0Left         ; if bit pattern doesnt match, bypass Down block
+.P0IsDown:
+    DEC JetYPos
     LDA #0
-    STA JetAnimOffset        ; set jet animation frame to zero
+    STA JetAnimOffset       ; reset sprite animation to first frame
 
 CheckP0Left:
-    LDA #%01000000           ; if player 0 joystick left
+    LDA #%01000000          ; player0 joystick left
     BIT SWCHA
-    BNE CheckP0Right
-    LDA JetXPos
-    CMP #35                  ; if (player0 X position < 35)
-    BMI CheckP0Right         ;    then: skip decrement
-    DEC JetXPos              ;    else: decrement X position
-    LDA JET_HEIGHT
-    STA JetAnimOffset        ; set new offset to display second sprite frame
+    BNE CheckP0Right        ; if bit pattern doesnt match, bypass Left block
+.P0IsLeft:
+    DEC JetXPos
+    LDA JET_HEIGHT          ; 9
+    STA JetAnimOffset       ; set animation offset to the second frame
 
 CheckP0Right:
-    LDA #%10000000           ; if player 0 joystick right
+    LDA #%10000000          ; player0 joystick right
     BIT SWCHA
-    BNE EndInputCheck
-    LDA JetXPos
-    CMP #100                 ; if (player0 X position > 100)
-    BPL EndInputCheck        ;    then: skip increment
-    INC JetXPos              ;    else: increment X position
-
-    LDA JET_HEIGHT
-    STA JetAnimOffset        ; set new offset to display second sprite frame
+    BNE EndInputCheck       ; if bit pattern doesnt match, bypass Right block
+.P0IsRight:
+    INC JetXPos
+    LDA JET_HEIGHT          ; 9
+    STA JetAnimOffset       ; set animation offset to the second frame
 
 EndInputCheck:              ; fallback when no input was performed
 
@@ -378,9 +350,7 @@ UpdateBomberPosition:
     JMP EndPositionUpdate
 
 .ResetBomberPosition:
-    JSR GetRandomBomberPos      ; call subroutine for random bomber position
-    INC Score                ; Score++
-    INC Timer                ; Timer++                                
+    jsr GetRandomBomberPos      ; call subroutine for random bomber position                              
 
 
 EndPositionUpdate:              ; fallback for the position update code
@@ -392,30 +362,27 @@ EndPositionUpdate:              ; fallback for the position update code
 CheckCollisionP0P1:
     LDA #%10000000              ;CXPPMM bit 7 detects P0 and P1 collision
     BIT CXPPMM                  ;check CXPPMM bit 7 against the above pattern
-    BNE .P0P1Collided           ;if there is a collision between P0 and P1, branch to CollisionP0P1
-    JSR SetTerrainRiverColor    ; else, set playfield color to green/blue
-    JMP EndCollisionCheck       ; else, skip to next check
-
-.P0P1Collided:
+    BNE .CollisionP0P1          ;if there is a collision between P0 and P1, branch to CollisionP0P1
+    JMP CheckCollisionP0PF      ;else skip to next check
+.CollisionP0P1:
     JSR GameOver                ;jump to subroutine GameOver
 
-EndCollisionCheck:              ; fallback
-    STA CXCLR                   ; clear all collision flags before the next frame    
+CheckCollisionP0PF:
+    LDA #%10000000              ; CXP0FB bit 7 detects P0 and PF collision  
+    BIT CXP0FB                  ; check CXP0FB bit 7 with the above pattern
+    BNE .CollisionP0PF          ;if collision P0 and PF happened, branch
+    JMP EndCollisionCheck       ;else, skip to next check
+
+.CollisionP0PF:
+    JSR GameOver                ;jump to subroutine GameOver
+
+EndCollisionCheck:
+    STA CXCLR                   ;clear all collision flags before the next frame
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; LOOP BACK TO START A  NEW FRAME
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;   
     JMP StartFrame      ; continue to display the next frame
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Set the colors for the terrain and river to green & blue
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-SetTerrainRiverColor subroutine
-    LDA #$C2
-    STA TerrainColor        ; set terrain color to green
-    LDA #$84
-    STA RiverColor          ; set river color to blue
-    RTS                     ; return subroutine     
     
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -445,10 +412,7 @@ SetObjectXPos subroutine
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 GameOver subroutine
     LDA #$30                ;COLOR RED
-    STA TerrainColor        ; set terrain color to red
-    STA RiverColor          ; set river color to red
-    LDA #0
-    STA Score               ; Score = 0
+    STA COLUBK              ;SET THE BACKGROUND TO RED
     RTS
 
     
