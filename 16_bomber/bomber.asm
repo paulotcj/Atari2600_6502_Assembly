@@ -379,8 +379,18 @@ UpdateBomberPosition:
 
 .ResetBomberPosition:
     JSR GetRandomBomberPos      ; call subroutine for random bomber position
-    INC Score                ; Score++
-    INC Timer                ; Timer++                                
+
+.SetScoreValues:
+    SED                         ; set BCD mode for score and timer values
+    LDA Score
+    CLC                         ; CLEAR CARRY
+    ADC #1                      ; ADD WITH CARRY
+    STA Score                   ; add 1 to the Score (BCD does not like INC)
+    LDA Timer
+    CLC
+    ADC #1
+    STA Timer                   ; add 1 to the Timer (BCD does not like INC)
+    CLD                         ; disable BCD after updating Score and Timer   (CLEAR DECIMAL)                         
 
 
 EndPositionUpdate:              ; fallback for the position update code
