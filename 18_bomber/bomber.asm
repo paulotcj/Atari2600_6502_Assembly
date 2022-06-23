@@ -497,7 +497,7 @@ GenerateJetSound subroutine
     STA AUDF0                ; set the audio frequency/pitch register
 
     RTS    
-    ;
+    
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Set the colors for the terrain and river to green & blue
