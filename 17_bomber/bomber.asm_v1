@@ -276,7 +276,7 @@ GameVisibleLine:
     TXA                     ; transfer X to A
     SEC                     ; make sure carry flag is set before subtraction
     SBC JetYPos             ; subtract sprite Y-coordinate
-    CMP #JET_HEIGHT          ; are we inside the sprite height bounds?
+    CMP JET_HEIGHT          ; are we inside the sprite height bounds?
     BCC .DrawSpriteP0       ; if result < SpriteHeight, call the draw routine
     LDA #0                  ; else, set lookup index to zero
 
@@ -294,7 +294,7 @@ GameVisibleLine:
     TXA                     ; transfer X to A
     SEC                     ; make sure carry flag is set before subtraction
     SBC BomberYPos          ; subtract sprite Y-coordinate
-    CMP #BOMBER_HEIGHT       ; are we inside the sprite height bounds?
+    CMP BOMBER_HEIGHT       ; are we inside the sprite height bounds?
     BCC .DrawSpriteP1       ; if result < SpriteHeight, call the draw routine
     LDA #0                  ; else, set lookup index to zero
 
@@ -370,7 +370,7 @@ CheckP0Left:
     BMI CheckP0Right         ;    then: skip decrement
 .P0LeftPressed:    
     DEC JetXPos              ;    else: decrement X position
-    LDA #JET_HEIGHT
+    LDA JET_HEIGHT
     STA JetAnimOffset        ; set new offset to display second sprite frame
 
 CheckP0Right:
@@ -383,7 +383,7 @@ CheckP0Right:
 .P0RightPressed:    
     INC JetXPos              ;    else: increment X position
 
-    LDA #JET_HEIGHT
+    LDA JET_HEIGHT
     STA JetAnimOffset        ; set new offset to display second sprite frame
 
 CheckButtonPressed:
@@ -419,10 +419,10 @@ UpdateBomberPosition:
 
 .SetScoreValues:
     SED                         ; set BCD mode for score and timer values
-    ; LDA Score
-    ; CLC                         ; CLEAR CARRY
-    ; ADC #1                      ; ADD WITH CARRY
-    ; STA Score                   ; add 1 to the Score (BCD does not like INC)
+    LDA Score
+    CLC                         ; CLEAR CARRY
+    ADC #1                      ; ADD WITH CARRY
+    STA Score                   ; add 1 to the Score (BCD does not like INC)
     LDA Timer
     CLC
     ADC #1
@@ -441,26 +441,10 @@ CheckCollisionP0P1:
     BIT CXPPMM                  ;check CXPPMM bit 7 against the above pattern
     BNE .P0P1Collided           ;if there is a collision between P0 and P1, branch to CollisionP0P1
     JSR SetTerrainRiverColor    ; else, set playfield color to green/blue
-    JMP CheckCollisionM0P1      ; check next possible collision
+    JMP EndCollisionCheck       ; else, skip to next check
 
 .P0P1Collided:
     JSR GameOver                ;jump to subroutine GameOver
-
-
-CheckCollisionM0P1:
-    LDA #%10000000           ; CXM0P bit 7 detects M0 and P1 collision
-    BIT CXM0P                ; check CXM0P bit 7 with the above pattern
-    BNE .M0P1Collided        ; collision missile 0 and player 1 happened
-    JMP EndCollisionCheck
-.M0P1Collided:
-    SED
-    LDA Score
-    CLC
-    ADC #1
-    STA Score                ; adds 1 to the Score using decimal mode
-    CLD                      ; CLEAR DECIMAL
-    LDA #0
-    STA MissileYPos          ; reset the missile position    
 
 EndCollisionCheck:              ; fallback
     STA CXCLR                   ; clear all collision flags before the next frame    
