@@ -136,7 +136,7 @@ StartFrame:
     REPEND
     LDA #0
     STA VSYNC                ; turn off VSYNC
-    REPEAT 33
+    REPEAT 31
         STA WSYNC   ; display the recommended lines of vblank
     REPEND
 
@@ -158,6 +158,8 @@ StartFrame:
     JSR SetObjectXPos           ; set missile horizontal position    
     
     JSR CalculateDigitOffset    ; calculate scoreboard digits lookup table offset
+
+    JSR GenerateJetSound        ; configure and enable our jet engine audio
 
     STA WSYNC
     STA HMOVE                   ; apply the horizontal offsets previously set
@@ -269,7 +271,7 @@ GameVisibleLine:
     
     ;----------------------------------------
     ; this is the beginning of the loop
-    LDX #85                 ; X COUNTS THE NUMBER OF REMAINING SCANLINES
+    LDX #89                 ; X COUNTS THE NUMBER OF REMAINING SCANLINES
 .GameLineLoop:
     DRAW_MISSILE            ; macro to check if we should draw the missile
 .AreWeInsideJetSprite:      ; check if should render sprite player0
@@ -440,7 +442,7 @@ CheckCollisionP0P1:
     LDA #%10000000              ;CXPPMM bit 7 detects P0 and P1 collision
     BIT CXPPMM                  ;check CXPPMM bit 7 against the above pattern
     BNE .P0P1Collided           ;if there is a collision between P0 and P1, branch to CollisionP0P1
-    JSR SetTerrainRiverColor    ; else, set playfield color to green/blue
+    JSR SetGreenBlueTerrain    ; else, set playfield color to green/blue
     JMP CheckCollisionM0P1      ; check next possible collision
 
 .P0P1Collided:
@@ -471,9 +473,36 @@ EndCollisionCheck:              ; fallback
     JMP StartFrame      ; continue to display the next frame
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Generate audio for the jet engine sound based on the jet y-position
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; The frequency/pitch will be modified based on the jet current y-position.
+;; Normally, the TIA audio frequency goes from 0 (highest) to 31 (lowest).
+;; We subtract 31 - (JetYPos/8) to achieve the desired final pitch value.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+GenerateJetSound subroutine
+    LDA #3
+    STA AUDV0                ; set the audio volume register
+
+    LDA #8
+    STA AUDC0                ; set the audio control register to white noise
+
+    LDA JetYPos              ; loads the accumulator with the jet y-position
+    LSR
+    LSR
+    LSR                      ; divide the accumulator by 8 (using right-shifts)
+    STA Temp                 ; save the Y/8 value in a temp variable
+    LDA #31
+    SEC
+    SBC Temp                 ; subtract 31-(Y/8)
+    STA AUDF0                ; set the audio frequency/pitch register
+
+    RTS    
+    ;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Set the colors for the terrain and river to green & blue
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-SetTerrainRiverColor subroutine
+SetGreenBlueTerrain subroutine
     LDA #$C2
     STA TerrainColor        ; set terrain color to green
     LDA #$84
